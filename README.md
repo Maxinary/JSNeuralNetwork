@@ -1,2 +1,2 @@
-# JSNeuralNetwork
-A neural network simulator in Javascript
+# JS Logical Viewing
+A way to view logical systems in Javascript
