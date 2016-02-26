@@ -1,14 +1,36 @@
 "use strict";
 
+let draw = true;
 var canvas = document.getElementById("drawing");
 canvas.width = document.body.clientWidth;
 canvas.height = document.body.clientHeight;
 var body = document.getElementsByTagName("body");
 canvas.addEventListener('click', function(event) {
+  if(draw){
+    for(var i=0;i<neurons.length;i++){
+      if(neurons[i].clicked(event.pageX, event.pageY)){
+        neurons[i].output = !neurons[i].output;
+        neurons[i].drawCircle();
+      }
+    }
+  }
+}, false);
+
+//right click only draws that
+canvas.addEventListener('contextmenu', function(event) {
   for(var i=0;i<neurons.length;i++){
     if(neurons[i].clicked(event.pageX, event.pageY)){
-      neurons[i].output = !neurons[i].output;
+      event.preventDefault();
+      draw = !draw;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      neurons[i].drawLines();
       neurons[i].drawCircle();
+      for(var j=0;j<neurons.length;j++){
+        if(neurons[i].inputs[j] !== 0){
+          neurons[j].drawCircle();
+        }
+      }
+      return false;
     }
   }
 }, false);
@@ -97,7 +119,7 @@ class Neuron {
           neurons[i].location.x, 
           neurons[i].location.y
         );
-        ctx.lineWidth = 2+(this.inputs[i]-0.5)*4;
+        ctx.lineWidth = 1.5+(this.inputs[i]-0.75)*6;
         ctx.lineTo(
             c.x,
             c.y
@@ -168,11 +190,20 @@ var chooseF = function(enumVal){
   }
 };
 
-neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(100,100), 40));
+//inputs
 neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(100,200), 40));
-neurons.push(new Neuron(neurons.length, Comparators.LT, new Tuple(300,100), 40));
-neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(300,200), 40));
-neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(500,150), 40));
+neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(100,300), 40));
+
+//xors
+neurons.push(new Neuron(neurons.length, Comparators.LT, new Tuple(500,100), 40));
+neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(500,200), 40));
+neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(900,150), 40));
+
+//NOR
+neurons.push(new Neuron(neurons.length, Comparators.LT, new Tuple(500,300), 40));
+
+//NOT
+neurons.push(new Neuron(neurons.length, Comparators.LT, new Tuple(500,400), 40));
 
 //self sufficient
 neurons[0].registerInput(0,1.1);
@@ -191,17 +222,27 @@ neurons[3].registerInput(1,1.1);
 neurons[4].registerInput(2,0.75);
 neurons[4].registerInput(3,0.75);
 
+//NOR
+neurons[5].registerInput(0,1.1);
+neurons[5].registerInput(1,1.1);
+
+//NOT
+neurons[6].registerInput(1,1.1);
+
+
 var drawStuff = function(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  var cneurons = JSON.parse(JSON.stringify(neurons));
-  
-  for(var i=0;i<neurons.length;i++){
-    neurons[i].update(cneurons);
-    neurons[i].drawLines();
-  }
-  
-  for(var i=0;i<neurons.length;i++){
-      neurons[i].drawCircle();
+  if(draw){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    var cneurons = JSON.parse(JSON.stringify(neurons));
+    
+    for(var i=0;i<neurons.length;i++){
+      neurons[i].update(cneurons);
+      neurons[i].drawLines();
+    }
+    
+    for(var i=0;i<neurons.length;i++){
+        neurons[i].drawCircle();
+    }
   }
 };
 
