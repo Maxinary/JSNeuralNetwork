@@ -91,14 +91,24 @@ class Neuron {
           this.location.x - this.radius*Math.cos(angle),
           this.location.y - this.radius*Math.sin(angle)
          );
+
         ctx.beginPath();
         ctx.moveTo(          
           neurons[i].location.x, 
           neurons[i].location.y
         );
+        ctx.lineWidth = 2+(this.inputs[i]-0.5)*4;
         ctx.lineTo(
             c.x,
             c.y
+        );
+        ctx.stroke();
+        //arrow
+        ctx.beginPath();
+        ctx.lineWidth = 5;
+        ctx.moveTo(          
+          c.x, 
+          c.y
         );
         ctx.lineTo(
             c.x + 10*Math.cos(angle+5*Math.PI/6),
@@ -158,16 +168,16 @@ var chooseF = function(enumVal){
   }
 };
 
-neurons.push(new Neuron(neurons.length, Comparators.EQ, new Tuple(100,100), 40));
-neurons.push(new Neuron(neurons.length, Comparators.EQ, new Tuple(100,200), 40));
+neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(100,100), 40));
+neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(100,200), 40));
 neurons.push(new Neuron(neurons.length, Comparators.LT, new Tuple(300,100), 40));
 neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(300,200), 40));
 neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(500,150), 40));
 
 //self sufficient
-neurons[0].registerInput(0,1);
+neurons[0].registerInput(0,1.1);
 
-neurons[1].registerInput(1,1);
+neurons[1].registerInput(1,1.1);
 
 //NAND
 neurons[2].registerInput(0,0.75);
