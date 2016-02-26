@@ -3,11 +3,17 @@
 <html>
 <head>
   <title>NeuralNetwork</title>
-
+  <script>
+    function resize(){
+      canvas.width = document.body.clientWidth;
+      canvas.height = document.body.clientHeight;
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "#000000";
+    };
+  </script>
   <link rel="stylesheet" href="styles.css">
 </head>
-
-<body>
+<body onresize="resize();">
   <canvas id="drawing"></canvas>
   <script src="main.js"></script> 
 </body>
