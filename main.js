@@ -3,9 +3,28 @@
 var canvas = document.getElementById("drawing");
 canvas.width = document.body.clientWidth;
 canvas.height = document.body.clientHeight;
+var body = document.getElementsByTagName("body");
+canvas.addEventListener('click', function(event) {
+  for(var i=0;i<neurons.length;i++){
+    if(neurons[i].clicked(event.pageX, event.pageY)){
+      neurons[i].output = !neurons[i].output;
+      neurons[i].drawCircle();
+    }
+  }
+}, false);
+
 var ctx = canvas.getContext("2d");
 
 var neurons = [];
+
+function distance(x1, y1, x2, y2){
+  return Math.sqrt(Math.pow(x1-x2,2)+Math.pow(y1-y2,2));
+}
+
+var Comparators = {
+    LT : "LT",
+    GT : "GT"
+};
 
 class Tuple {
   constructor(x,y){
@@ -16,9 +35,12 @@ class Tuple {
 
 class Neuron {
   constructor(arrLocation,//integer,
-              process,    //boolean function taking an array
-              position) { //Tuple
-    this.process = process;
+              process,    //enum to be put into func func
+              position,   //Tuple
+              radius) {   //radius
+    this.radius = radius;
+    this.process = chooseF(process);
+    this.name = process;
     this.output = false;
     this.inputs = [];//every tick read all input multipliers (Which correspond to neurons)
     for(var i=0; i<neurons.length; i++){
@@ -43,7 +65,7 @@ class Neuron {
     }
   }
   
-  draw(){
+  drawCircle(){
     if(this.output){
       ctx.fillStyle = "#FFFFFF";
     }else{
@@ -53,68 +75,124 @@ class Neuron {
     ctx.arc(this.location.x,this.location.y,40,0,2*Math.PI, true);
     ctx.stroke();
     ctx.fill();
+  }
+  
+  drawLines(){
     for(var i=0;i<neurons.length;i++){
-      if(this.inputs[i]!=0){
-        ctx.beginPath();
-        ctx.moveTo(
-          this.location.x,
-          this.location.y
+      if(this.inputs[i]!==0 && 
+        distance(neurons[i].location.x, neurons[i].location.y,
+        this.location.x, this.location.y)>0
+      ){
+        var angle = Math.atan2(
+          this.location.y-neurons[i].location.y,
+          this.location.x-neurons[i].location.x
         );
-        ctx.lineTo(
+        var c = new Tuple(
+          this.location.x - this.radius*Math.cos(angle),
+          this.location.y - this.radius*Math.sin(angle)
+         );
+        ctx.beginPath();
+        ctx.moveTo(          
           neurons[i].location.x, 
           neurons[i].location.y
+        );
+        ctx.lineTo(
+            c.x,
+            c.y
+        );
+        ctx.lineTo(
+            c.x + 10*Math.cos(angle+5*Math.PI/6),
+            c.y + 10*Math.sin(angle+5*Math.PI/6)
+        );
+        ctx.lineTo(
+            c.x + 10*Math.cos(angle-5*Math.PI/6),
+            c.y + 10*Math.sin(angle-5*Math.PI/6)
+        );
+        ctx.lineTo(
+            c.x,
+            c.y
         );
         ctx.stroke();
       }
     }
   }
+  
+  clicked(x, y){
+    if(distance(this.location.x, this.location.y, x, y) <= this.radius){
+      return true;
+    }else{
+      return false;
+    }
+  }
 }
 
-//make a small test of neurons on canvas
 //maybe draw white if output=true, black else
-
 ctx.lineWidth = 5;
 ctx.strokeStyle = "#000000";
 
-function sum(lotsodata){
-  var ssum = 0;
-  for(var i=0;i<lotsodata.length;i++){
-    ssum+=lotsodata[i];
+var chooseF = function(enumVal){
+  if(enumVal == Comparators.LT){
+    return function(lotsodata){
+      var ssum = 0;
+      for(var i=0;i<lotsodata.length;i++){
+        ssum+=lotsodata[i];
+      }
+      if(ssum<1){
+        return true;
+      }else{
+        return false;
+      }
+    };
+  } else {//GT and
+  return function(lotsodata){
+      var ssum = 0;
+      for(var i=0;i<lotsodata.length;i++){
+        ssum+=lotsodata[i];
+      }
+      if(ssum>1){
+        return true;
+      }else{
+        return false;
+      }
+    };
   }
-  if(ssum>1/3){
-    return true;
-  }else{
-    return false;
-  }
-}
+};
 
-neurons.push(new Neuron(neurons.length, sum, new Tuple(100,100)));
-neurons.push(new Neuron(neurons.length, sum, new Tuple(100,200)));
-neurons.push(new Neuron(neurons.length, sum, new Tuple(300,100)));
-neurons.push(new Neuron(neurons.length, sum, new Tuple(300,200)));
-
+neurons.push(new Neuron(neurons.length, Comparators.EQ, new Tuple(100,100), 40));
+neurons.push(new Neuron(neurons.length, Comparators.EQ, new Tuple(100,200), 40));
+neurons.push(new Neuron(neurons.length, Comparators.LT, new Tuple(300,100), 40));
+neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(300,200), 40));
+neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(500,150), 40));
 
 //self sufficient
 neurons[0].registerInput(0,1);
 
 neurons[1].registerInput(1,1);
 
-//AND gate
-neurons[2].registerInput(0,0.2);
-neurons[2].registerInput(1,0.2);
+//NAND
+neurons[2].registerInput(0,0.75);
+neurons[2].registerInput(1,0.75);
 
-//OR gate
-neurons[3].registerInput(0,0.5);
-neurons[3].registerInput(1,0.5);
+//OR
+neurons[3].registerInput(0,1.1);
+neurons[3].registerInput(1,1.1);
 
+//AND
+neurons[4].registerInput(2,0.75);
+neurons[4].registerInput(3,0.75);
 
 var drawStuff = function(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  var cneurons = neurons.slice();
+  var cneurons = JSON.parse(JSON.stringify(neurons));
+  
   for(var i=0;i<neurons.length;i++){
     neurons[i].update(cneurons);
-    neurons[i].draw();
+    neurons[i].drawLines();
+  }
+  
+  for(var i=0;i<neurons.length;i++){
+      neurons[i].drawCircle();
   }
 };
 
-setInterval(drawStuff, 2000);
+setInterval(drawStuff, 500);
