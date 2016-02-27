@@ -93,7 +93,7 @@ class Neuron {
       ctx.fillStyle = "#000000";
     }
     ctx.beginPath();
-    ctx.arc(this.location.x,this.location.y,40,0,2*Math.PI, true);
+    ctx.arc(this.location.x,this.location.y,this.radius,0,2*Math.PI, true);
     ctx.stroke();
     ctx.fill();
   }
