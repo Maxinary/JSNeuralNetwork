@@ -1,15 +1,16 @@
 "use strict";
 
 let draw = true;
+let drawHead = 0;
 var canvas = document.getElementById("drawing");
 canvas.width = document.body.clientWidth;
 canvas.height = document.body.clientHeight;
 var body = document.getElementsByTagName("body");
 canvas.addEventListener('click', function(event) {
-  if(draw){
-    for(var i=0;i<neurons.length;i++){
-      if(neurons[i].clicked(event.pageX, event.pageY)){
-        neurons[i].output = !neurons[i].output;
+  for(var i=0;i<neurons.length;i++){
+    if(neurons[i].clicked(event.pageX, event.pageY)){
+      neurons[i].output = !neurons[i].output;
+      if(draw){
         neurons[i].drawCircle();
       }
     }
@@ -20,19 +21,17 @@ canvas.addEventListener('click', function(event) {
 canvas.addEventListener('contextmenu', function(event) {
   for(var i=0;i<neurons.length;i++){
     if(neurons[i].clicked(event.pageX, event.pageY)){
+      drawHead = i;
       event.preventDefault();
       draw = !draw;
       ctx.clearRect(0,0,canvas.width,canvas.height);
-      neurons[i].drawLines();
-      neurons[i].drawCircle();
-      for(var j=0;j<neurons.length;j++){
-        if(neurons[i].inputs[j] !== 0){
-          neurons[j].drawCircle();
-        }
-      }
+
+      neurons[i].drawPrevious();
+
       return false;
     }
   }
+  
 }, false);
 
 var ctx = canvas.getContext("2d");
@@ -116,8 +115,8 @@ class Neuron {
 
         ctx.beginPath();
         ctx.moveTo(          
-          neurons[i].location.x, 
-          neurons[i].location.y
+          neurons[i].location.x - neurons[i].radius*Math.cos(angle+Math.PI), 
+          neurons[i].location.y - neurons[i].radius*Math.sin(angle+Math.PI)
         );
         ctx.lineWidth = 1.5+(this.inputs[i]-0.75)*6;
         ctx.lineTo(
@@ -147,6 +146,16 @@ class Neuron {
         ctx.stroke();
       }
     }
+  }
+  
+  drawPrevious(){
+    for(var j=0;j<neurons.length;j++){
+      if(this.inputs[j] !== 0 && j!=this.arrLocation){
+        neurons[j].drawPrevious();
+      }
+    }
+    this.drawLines();
+    this.drawCircle();
   }
   
   clicked(x, y){
@@ -190,60 +199,23 @@ var chooseF = function(enumVal){
   }
 };
 
-//inputs
-neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(100,200), 40));
-neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(100,300), 40));
-
-//xors
-neurons.push(new Neuron(neurons.length, Comparators.LT, new Tuple(500,100), 40));
-neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(500,200), 40));
-neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(900,150), 40));
-
-//NOR
-neurons.push(new Neuron(neurons.length, Comparators.LT, new Tuple(500,300), 40));
-
-//NOT
-neurons.push(new Neuron(neurons.length, Comparators.LT, new Tuple(500,400), 40));
-
-//self sufficient
-neurons[0].registerInput(0,1.1);
-
-neurons[1].registerInput(1,1.1);
-
-//NAND
-neurons[2].registerInput(0,0.75);
-neurons[2].registerInput(1,0.75);
-
-//OR
-neurons[3].registerInput(0,1.1);
-neurons[3].registerInput(1,1.1);
-
-//AND
-neurons[4].registerInput(2,0.75);
-neurons[4].registerInput(3,0.75);
-
-//NOR
-neurons[5].registerInput(0,1.1);
-neurons[5].registerInput(1,1.1);
-
-//NOT
-neurons[6].registerInput(1,1.1);
-
 
 var drawStuff = function(){
+  var cneurons = JSON.parse(JSON.stringify(neurons));
   if(draw){
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    var cneurons = JSON.parse(JSON.stringify(neurons));
     
     for(var i=0;i<neurons.length;i++){
       neurons[i].update(cneurons);
       neurons[i].drawLines();
+      neurons[i].drawCircle();
     }
-    
-    for(var i=0;i<neurons.length;i++){
-        neurons[i].drawCircle();
+  }else{
+    for(var j=0;j<neurons.length;j++){
+      neurons[drawHead].drawPrevious();
+      neurons[j].update(cneurons);
     }
   }
 };
 
-setInterval(drawStuff, 500);
+setInterval(drawStuff, 50);
