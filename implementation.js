@@ -1,7 +1,7 @@
 //This is a neural network simulating a 3 bit binary full adder chain
 var repeatNeurons = 12;
 var repeats = 3;
-var size = 5;
+var size = 40;
 for(var i=0;i<repeats;i++){
   neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(5*size/4+10*size/4 *i,5*size/4), size));
   neurons.push(new Neuron(neurons.length, Comparators.GT, new Tuple(75*size/4+10*size/4 *i,5*size/4), size));
